@@ -137,4 +137,4 @@ cython_debug/
 .vscode/
 
 # sectrets
-.sectrets
+SCRECTS-DEV.py
