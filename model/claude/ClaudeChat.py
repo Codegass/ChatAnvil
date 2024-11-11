@@ -26,11 +26,14 @@ class ClaudeChat(ChatBase):
     '''
     The Claude chatting class
     '''
-    def __init__(self, api_key: str = os.getenv("CLAUDE_KEY"), system_prompt: str = "You are a helpful assistant.", max_chat_history: int = 10, max_retry: int = 10, base_delay: int = 1) -> None:
+    def __init__(self, local_key : str =None, system_prompt: str = "You are a helpful assistant.", max_chat_history: int = 10, max_retry: int = 10, base_delay: int = 1) -> None:
         '''
         Initialize the Claude chat
         '''
-        self.client = Anthropic(api_key=api_key)
+        if local_key:
+            self.client = Anthropic(api_key=local_key)
+        else:
+            self.client = Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
         self.max_chat_history = max_chat_history
         self.max_retry = max_retry
         self.base_delay = base_delay

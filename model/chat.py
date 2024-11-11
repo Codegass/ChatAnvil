@@ -7,19 +7,19 @@ from model.claude.ClaudeChat import ClaudeChat
 
 class Chat():
 
-    def __init__(self, service_provider: str = "openai") -> None:
+    def __init__(self, key: str = None, service_provider: str = "openai") -> None:
         '''
         Initialize the chat client
         '''
         self.service_provider = service_provider
         if service_provider == "openai":
-            self.chat = OpenAiChat()
+            self.chat = OpenAiChat(local_key=key)
         if service_provider == "ollama":
             self.chat = OllamaChat()
         if service_provider == "groq":
-            self.chat = GroqChat()
+            self.chat = GroqChat(local_key=key)
         if service_provider == "claude":
-            self.chat = ClaudeChat()
+            self.chat = ClaudeChat(local_key=key)
         
     def get_response(self, message: list, model: str):
         '''
