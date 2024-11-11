@@ -26,7 +26,7 @@ class ClaudeChat(ChatBase):
     '''
     The Claude chatting class
     '''
-    def __init__(self, api_key: str = os.getenv("CLAUDE_API_KEY"), system_prompt: str = "You are a helpful assistant.", max_chat_history: int = 10, max_retry: int = 10, base_delay: int = 1) -> None:
+    def __init__(self, api_key: str = os.getenv("CLAUDE_KEY"), system_prompt: str = "You are a helpful assistant.", max_chat_history: int = 10, max_retry: int = 10, base_delay: int = 1) -> None:
         '''
         Initialize the Claude chat
         '''

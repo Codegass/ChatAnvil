@@ -26,7 +26,7 @@ class OpenAiChat(ChatBase):
     '''
     The openai chatting class
     '''
-    def __init__(self, api_key: str = os.getenv("OPENAI_API_KEY"), system_prompt: str = "You are a helpful assistant.", max_chat_history: int = 10, max_retry = 10, base_delay: int = 1, temperature: float = 0, max_tokens: int = 400, top_p: int = 1, frequency_penalty=0, presence_penalty=0) -> None:
+    def __init__(self, api_key: str = os.getenv("OPENAI_KEY"), system_prompt: str = "You are a helpful assistant.", max_chat_history: int = 10, max_retry = 10, base_delay: int = 1, temperature: float = 0, max_tokens: int = 400, top_p: int = 1, frequency_penalty=0, presence_penalty=0) -> None:
         '''
         Initialize the openai api client
         '''

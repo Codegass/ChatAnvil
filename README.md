@@ -33,9 +33,9 @@ Chat Base is a Python project that provides a unified interface for interacting 
 
 Set the necessary environment variables for the API keys:
 ```sh
-export OPENAI_API_KEY='your_openai_api_key'
-export CLAUDE_API_KEY='your_claude_api_key'
-export GROQ_API_KEY='your_groq_api_key'
+export OPENAI_KEY='your_openai_api_key'
+export CLAUDE_KEY='your_claude_api_key'
+export GROQ_KEY='your_groq_api_key'
 ```
 
 ## Usage
