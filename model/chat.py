@@ -15,7 +15,7 @@ class Chat():
         if service_provider == "openai":
             self.chat = OpenAiChat(local_key=key)
         if service_provider == "ollama":
-            self.chat = OllamaChat()
+            self.chat = OllamaChat() # OllamaChat does not require any key
         if service_provider == "groq":
             self.chat = GroqChat(local_key=key)
         if service_provider == "claude":
