@@ -5,6 +5,7 @@ import logging
 import random
 from datetime import datetime
 import time
+import uuid
 
 # save logging information to specified file
 
@@ -44,6 +45,7 @@ class OpenAiChat(ChatBase):
         self.presence_penalty = presence_penalty
         self.messages_queue = []
         self.system_prompt = system_prompt
+        self.session_id = uuid.uuid4()
 
 
     def retry_with_exponential_backoff(self, func, *args, retries=0, **kwargs):
@@ -81,6 +83,9 @@ class OpenAiChat(ChatBase):
                 frequency_penalty=self.frequency_penalty, 
                 presence_penalty=self.presence_penalty    
             )
+            # append the assistant message to the messages queue
+            assistant_message = {"role": "assistant", "content": response.choices[0].message.content}
+            self.messages_queue.append(assistant_message)
             return response.choices[0].message.content
         except openai.APIError as e:
             logger.error(f"OpenAI API error occurred: {e}")
@@ -128,6 +133,10 @@ class OpenAiChat(ChatBase):
             self.messages_queue[0]["content"] = prompt          
 
 
+    def clear_history(self):
+        '''Clean history only keep the system prompt'''
+        self.messages_queue = [{"role": "system", "content": self.system_prompt}]
+
     def extract_code(self, response: str) -> list :
         '''
         Extract the code from the response
@@ -141,6 +150,12 @@ class OpenAiChat(ChatBase):
         Evaluate the response and code
         '''
         return response
+    
+    def get_session_id(self):
+        '''
+        Get the session id
+        '''
+        return self.session_id
     
 
 # Example usage

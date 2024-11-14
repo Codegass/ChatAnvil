@@ -29,11 +29,11 @@ class Chat():
     
     def extract_code(self, response: str) -> list :
         '''
-        Extract the code from the response
+        Extract the code from the response,
+        if the repsonse contains multiple code snippets, return all of them as a dict
         '''
-        code_with_lang_tag = response.split('```')[1]
-        code = code_with_lang_tag.split("\n")[1:]
-        return code
+        
+        
     
     def evaluate_code_with_error_message(self, code: str, error: str):
         '''

@@ -5,6 +5,7 @@ import logging
 import random
 from datetime import datetime
 import time
+import uuid
 
 # Save logging information to specified file
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ class GroqChat(ChatBase):
         self.base_delay = base_delay
         self.messages_queue = []
         self.system_prompt = system_prompt
+        self.session_id = uuid.uuid4()
 
     def retry_with_exponential_backoff(self, func, *args, retries=0, **kwargs):
         '''
@@ -70,6 +72,9 @@ class GroqChat(ChatBase):
                 model=model,
                 messages=self.messages_queue
             )
+            # append the assistant message to the messages queue
+            assistant_message = {"role": "assistant", "content": response.choices[0].message.content}
+            self.messages_queue.append(assistant_message)
             return response.choices[0].message.content
         except Exception as e:
             logger.error(f"Error occurred while getting Groq API response: {e}")
@@ -126,3 +131,13 @@ class GroqChat(ChatBase):
         Evaluate the response and code
         '''
         return response
+    
+    def clear_history(self):
+        '''Clean history only keep the system prompt'''
+        self.messages_queue = [{"role": "system", "content": self.system_prompt}]
+
+    def get_session_id(self):
+        '''
+        Get the session id
+        '''
+        return self.session_id

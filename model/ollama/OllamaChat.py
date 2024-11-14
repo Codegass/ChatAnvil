@@ -5,7 +5,7 @@ import logging
 import random
 from datetime import datetime
 import time
-
+import uuid
 # Save logging information to specified file
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -35,6 +35,7 @@ class OllamaChat(ChatBase):
         self.base_delay = base_delay
         self.messages_queue = []
         self.system_prompt = system_prompt
+        self.session_id = uuid.uuid4()
 
     def retry_with_exponential_backoff(self, func, *args, retries=0, **kwargs):
         '''
@@ -66,13 +67,12 @@ class OllamaChat(ChatBase):
                 model=model,
                 messages=self.messages_queue
             )
-            assistant_response = response['message']['content']
-        # Update the last assistant message in the queue
-            if self.messages_queue and self.messages_queue[-1]['role'] == 'assistant':
-                self.messages_queue[-1]['content'] = assistant_response
-            return assistant_response
+            # append the assistant message to the messages queue
+            assistant_message = {"role": "assistant", "content": response['message']['content']}
+            self.messages_queue.append(assistant_message)
+            return assistant_message['content']
         except Exception as e:
-            logger.error(f"Error occurred while getting Claude API response: {e}")
+            logger.error(f"Error occurred while getting Ollama API response: {e}")
             raise
 
     def structure_message(self, message):
@@ -128,3 +128,13 @@ class OllamaChat(ChatBase):
         Evaluate the response and code
         '''
         return response
+    
+    def get_session_id(self):
+        '''
+        Get the session id
+        '''
+        return self.session_id
+
+    def clear_history(self):
+        '''Clean history only keep the system prompt'''
+        self.messages_queue = [{"role": "system", "content": self.system_prompt}]

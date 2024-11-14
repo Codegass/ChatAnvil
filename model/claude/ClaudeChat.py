@@ -5,7 +5,7 @@ import logging
 import random
 from datetime import datetime
 import time
-
+import uuid
 # Save logging information to specified file
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -26,7 +26,7 @@ class ClaudeChat(ChatBase):
     '''
     The Claude chatting class
     '''
-    def __init__(self, local_key : str =None, system_prompt: str = "You are a helpful assistant.", max_chat_history: int = 10, max_retry: int = 10, base_delay: int = 1) -> None:
+    def __init__(self, local_key : str =None, system_prompt: str = "You are a helpful assistant.", max_chat_history: int = 10, max_retry: int = 10, base_delay: int = 1, temperature: float = 0, max_tokens: int = 2000) -> None:
         '''
         Initialize the Claude chat
         '''
@@ -37,8 +37,11 @@ class ClaudeChat(ChatBase):
         self.max_chat_history = max_chat_history
         self.max_retry = max_retry
         self.base_delay = base_delay
+        self.temperature = temperature
+        self.max_tokens = max_tokens
         self.messages_queue = []
         self.system_prompt = system_prompt
+        self.session_id = uuid.uuid4()
 
     def retry_with_exponential_backoff(self, func, *args, retries=0, **kwargs):
         '''
@@ -59,7 +62,7 @@ class ClaudeChat(ChatBase):
             
             return self.retry_with_exponential_backoff(func, *args, retries=retries, **kwargs)
 
-    def get_response(self, message: list, model: str = "claude-3-5-sonnet-latest", max_tokens: int = 2000):
+    def get_response(self, message: list, model: str = "claude-3-sonnet-20240229"):
         '''
         Get the response from the Claude API
         '''
@@ -68,19 +71,17 @@ class ClaudeChat(ChatBase):
             response = self.retry_with_exponential_backoff(
                 self.client.messages.create,
                 model=model,
-                max_tokens=max_tokens,
+                max_tokens=self.max_tokens,
                 messages=self.messages_queue,
                 system=self.system_prompt
             )
-            assistant_response = response.content[0].text
-            # Update the last assistant message in the queue
-            if self.messages_queue and self.messages_queue[-1]['role'] == 'assistant':
-                self.messages_queue[-1]['content'] = assistant_response
-            return assistant_response
+            assistant_message = {"role": "assistant", "content": response.content[0].text}
+            self.messages_queue.append(assistant_message)
+            return response.content[0].text
         except Exception as e:
             logger.error(f"Error occurred while getting Claude API response: {e}")
             raise
-#TODO: Implement the structure_message method, need add the assistant message to the message queue
+
     def structure_message(self, message):
         '''
         Structure the message for the API with prompt and history messages
@@ -93,20 +94,14 @@ class ClaudeChat(ChatBase):
             elif not all(isinstance(m, dict) and "role" in m and "content" in m for m in message):
                 raise ValueError("Invalid message format. Should be a string, list of strings, or list of properly formatted message objects.")
 
-        # Add new messages to the queue
-        for msg in message:
-            self.messages_queue.append(msg)
-            # If the message is from the user, add a placeholder for the assistant's response
-            if msg['role'] == 'user':
-                self.messages_queue.append({"role": "assistant", "content": ""})
+        self.messages_queue.extend(message)
 
-        # Trim the message queue to maintain max_chat_history
         if len(self.messages_queue) > self.max_chat_history:
-            # Remove oldest messages, keeping an even number of messages (user + assistant pairs)
-            num_to_remove = len(self.messages_queue) - self.max_chat_history
-            if num_to_remove % 2 != 0:
-                num_to_remove += 1
-            self.messages_queue = self.messages_queue[num_to_remove:]
+            self.messages_queue = [msg for msg in self.messages_queue if msg["role"] == "system"] + \
+                                self.messages_queue[-(self.max_chat_history-1):]
+
+        if not self.messages_queue or self.messages_queue[0]["role"] != "system":
+            self.messages_queue.insert(0, {"role": "system", "content": self.system_prompt})
 
         return self.messages_queue
 
@@ -115,6 +110,11 @@ class ClaudeChat(ChatBase):
         Set the system prompt
         '''
         self.system_prompt = prompt
+        if not any(message["role"] == "system" and message["content"] == prompt for message in self.messages_queue):
+            self.messages_queue.append({"role": "system", "content": prompt})
+        else:
+            logger.info("System prompt already in the messages queue")
+            self.messages_queue[0]["content"] = prompt
 
     def extract_code(self, response: str) -> list :
         '''
@@ -129,3 +129,13 @@ class ClaudeChat(ChatBase):
         Evaluate the response and code
         '''
         return response
+    
+    def get_session_id(self):
+        '''
+        Get the session id
+        '''
+        return self.session_id
+
+    def clear_history(self):
+        '''Clean history only keep the system prompt'''
+        self.messages_queue = [{"role": "system", "content": self.system_prompt}]
