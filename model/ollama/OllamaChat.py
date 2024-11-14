@@ -87,20 +87,18 @@ class OllamaChat(ChatBase):
             elif not all(isinstance(m, dict) and "role" in m and "content" in m for m in message):
                 raise ValueError("Invalid message format. Should be a string, list of strings, or list of properly formatted message objects.")
 
-        # Add new messages to the queue
-        for msg in message:
-            self.messages_queue.append(msg)
-            # If the message is from the user, add a placeholder for the assistant's response
-            if msg['role'] == 'user':
-                self.messages_queue.append({"role": "assistant", "content": ""})
+        self.messages_queue.extend(message)
 
-        # Trim the message queue to maintain max_chat_history
         if len(self.messages_queue) > self.max_chat_history:
-            # Remove oldest messages, keeping an even number of messages (user + assistant pairs)
-            num_to_remove = len(self.messages_queue) - self.max_chat_history
-            if num_to_remove % 2 != 0:
-                num_to_remove += 1
-            self.messages_queue = self.messages_queue[num_to_remove:]
+            # Remove oldest user messages, keep system message
+            self.messages_queue = [msg for msg in self.messages_queue if msg["role"] == "system"] + \
+                                self.messages_queue[-(self.max_chat_history-1):]
+
+        # Ensure system prompt is always at the beginning of the queue
+        if not self.messages_queue or self.messages_queue[0]["role"] != "system":
+            self.messages_queue.insert(0, {"role": "system", "content": self.system_prompt})
+
+        return self.messages_queue
 
     def set_system_prompt(self, prompt: str):
         '''
