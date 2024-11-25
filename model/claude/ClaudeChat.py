@@ -110,11 +110,13 @@ class ClaudeChat(ChatBase):
         Set the system prompt
         '''
         self.system_prompt = prompt
-        if not any(message["role"] == "system" and message["content"] == prompt for message in self.messages_queue):
-            self.messages_queue.append({"role": "system", "content": prompt})
+        # check if the system prompt is already in the messages queue
+        if not any(message["role"] == "system" for message in self.messages_queue):
+            self.messages_queue.insert(0, {"role": "system", "content": self.system_prompt})
         else:
-            logger.info("System prompt already in the messages queue")
-            self.messages_queue[0]["content"] = prompt
+            logger.info("System prompt already in the messages queue, update it")
+            # chage the system prompt in the messages queue
+            self.messages_queue[0]["content"] = self.system_prompt
 
     def extract_code(self, response: str) -> list :
         '''

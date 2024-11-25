@@ -125,12 +125,12 @@ class OpenAiChat(ChatBase):
         '''
         self.system_prompt = prompt
         # check if the system prompt is already in the messages queue
-        if not any(message["role"] == "system" and message["content"] == prompt for message in self.messages_queue):
-            self.messages_queue.append({"role": "system", "content": prompt})
+        if not any(message["role"] == "system" for message in self.messages_queue):
+            self.messages_queue.insert(0, {"role": "system", "content": self.system_prompt})
         else:
-            logger.info("System prompt already in the messages queue")
+            logger.info("System prompt already in the messages queue, update it")
             # chage the system prompt in the messages queue
-            self.messages_queue[0]["content"] = prompt          
+            self.messages_queue[0]["content"] = self.system_prompt
 
 
     def clear_history(self):

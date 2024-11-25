@@ -32,9 +32,8 @@ class Chat():
         Extract the code from the response,
         if the repsonse contains multiple code snippets, return all of them as a dict
         '''
+        pass
         
-        
-    
     def evaluate_code_with_error_message(self, code: str, error: str):
         '''
         build the code and error pair with context and send to llm for fixing the 
@@ -42,4 +41,27 @@ class Chat():
         '''
         pass
         
+    def set_system_prompt(self, prompt: str):
+        '''
+        Set the system prompt
+        '''
+        self.chat.set_system_prompt(prompt)
+
+    def clear_history(self):
+        '''
+        Clear the history
+        '''
+        self.chat.clear_history()
+
+    def get_messages_queue(self):
+        '''
+        Get the messages queue
+        '''
+        return self.chat.messages_queue
+    
+    def get_session_id(self):
+        '''
+        Get the session id
+        '''
+        return self.chat.get_session_id()
     
