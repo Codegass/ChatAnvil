@@ -65,12 +65,12 @@ and load the environment variables in the `main.py` file:
 from dotenv import load_dotenv
 load_dotenv()
 
-from model.chatbot import ChatBot
+from model.chat import Chat
 
 service_provider = 'openai'
-chatbot = ChatBot(service_provider=service_provider) 
+chat = Chat(service_provider=service_provider) 
 # if you don't want to use the environment variables, you can use the local_key approach
-print(chatbot.get_response('Hello, how are you?', "gpt-4o"))
+print(chat.get_response('Hello, how are you?', "gpt-4o"))
 ```
 
 This will be useful if you are using separate keys from same service provider for different projects.
@@ -93,13 +93,13 @@ SCRECTS_DEV.py (or other name you used)
 lastly, you can import the keys in the `main.py` file as follows:
 
 ```python
-from model.chatbot import ChatBot
+from model.chat import Chat
 from SCRECTS_DEV import OPENAI_KEY, CLAUDE_KEY, GROQ_KEY # if you used a different name, replace SCRECTS_DEV with the name you used
 
 service_provider = 'openai'
-chatbot = ChatBot(local_key=OPENAI_KEY, service_provider=service_provider) 
+chat = Chat(local_key=OPENAI_KEY, service_provider=service_provider) 
 # if you don't want to use the local_key approach, you can use the environment variables and remove the local_key parameter
-print(chatbot.get_response('Hello, how are you?', "gpt-4o"))
+print(chat.get_response('Hello, how are you?', "gpt-4o"))
 ```
 
 
@@ -110,11 +110,11 @@ print(chatbot.get_response('Hello, how are you?', "gpt-4o"))
 ### Basic Usage
 
 ```python
-from model.chatbot import ChatBot
+from model.chat import Chat
 
 service_provider = 'openai'
-chatbot = ChatBot(service_provider=service_provider)
-print(chatbot.get_response('Hello, how are you?', "gpt-4"))
+chat = Chat(service_provider=service_provider)
+print(chat.get_response('Hello, how are you?', "gpt-4"))
 ```
 
 ### Mode Selection
@@ -123,33 +123,33 @@ ChatBase supports four different output modes:
 
 1. Default Mode
 ```python
-chatbot = ChatBot(service_provider='openai', mode='default')
-response = chatbot.get_response('What is Python?', "gpt-4")
+chat = Chat(service_provider='openai', mode='default')
+response = chat.get_response('What is Python?', "gpt-4")
 # Returns regular chat response
 ```
 
 2. Markdown Mode
 ```python
-chatbot = ChatBot(service_provider='openai', mode='markdown')
-response = chatbot.get_response('Write a Python function to sort a list', "gpt-4")
+chat = Chat(service_provider='openai', mode='markdown')
+response = chat.get_response('Write a Python function to sort a list', "gpt-4")
 # Returns markdown-formatted response with code blocks
-code_blocks = chatbot.parse_markdown(response)  # Extract code blocks
+code_blocks = chat.parse_markdown(response)  # Extract code blocks
 ```
 
 3. JSON Mode (Function Calling)
 ```python
-chatbot = ChatBot(service_provider='openai', mode='json')
-response = chatbot.get_response('Get current weather in New York', "gpt-4")
+chat = Chat(service_provider='openai', mode='json')
+response = chat.get_response('Get current weather in New York', "gpt-4")
 # Returns JSON-structured response
-parsed_data = chatbot.parse_json(response)  # Parse JSON response
+parsed_data = chat.parse_json(response)  # Parse JSON response
 ```
 
 4. XML Mode
 ```python
-chatbot = ChatBot(service_provider='openai', mode='xml')
-response = chatbot.get_response('Analyze the sentiment of this text', "gpt-4")
+chat = Chat(service_provider='openai', mode='xml')
+response = chat.get_response('Analyze the sentiment of this text', "gpt-4")
 # Returns XML-structured response
-parsed_data = chatbot.parse_xml(response)  # Parse XML response
+parsed_data = chat.parse_xml(response)  # Parse XML response
 ```
 
 ### Mode-Specific Features
