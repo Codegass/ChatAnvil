@@ -1,177 +1,102 @@
-# Chat Base
+# Chat-Base
 
-Chat Base is a Python project that provides a unified interface for interacting with various chat-based AI services, including OpenAI, Ollama, Groq, and Claude.
+A flexible and extensible Python library for interacting with multiple AI chat providers. Currently supports OpenAI, Anthropic (Claude), Groq, and Ollama.
 
 ## Features
 
-- Supports multiple AI service providers: OpenAI, Ollama, Groq, and Claude.
-- Implements exponential backoff for retrying API requests.
-- Logs API interactions and errors to log files.
-- Allows setting and updating system prompts.
-- Extracts code snippets from AI responses.
-- Multiple output modes support:
-  - Default mode: Regular chat experience
-  - Markdown mode: Structured output in markdown format with code parsing
-  - JSON mode: Structured output in JSON format for function calling
-  - XML mode: Structured output with XML tags
+- Unified interface for multiple AI chat providers
+- Easy provider switching with consistent API
+- Built-in retry mechanisms and error handling
+- Configurable logging
+- Environment variable support
+- Type hints throughout
 
 ## Installation
 
-1. Clone the repository:
-    ```sh
-    git clone https://github.com/codegass/chat-base.git
-    cd chat-base
-    ```
+```bash
+pip install chat-base
+```
 
-2. Create a virtual environment and activate it:
-    ```sh
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
+## Quick Start
 
-3. Install the required dependencies:
-    ```sh
-    pip install -r requirements.txt
-    ```
+```python
+from chat_base.core.chat import Chat
+
+# Initialize with OpenAI
+chat = Chat(service_provider='openai')
+
+# Get a response
+response = chat.get_response(
+    message="What is the capital of France?",
+    temperature=0.7
+)
+print(response)
+
+# Switch to Claude
+claude_chat = Chat(
+    service_provider='claude',
+    system_prompt="You are a helpful assistant that specializes in geography."
+)
+
+response = claude_chat.get_response(
+    message="What are the top 3 largest cities in Japan?"
+)
+print(response)
+```
 
 ## Configuration
 
-### Using Global Environment Variables
-Set the necessary environment variables for the API keys:
-```sh
-export OPENAI_KEY='your_openai_api_key'
-export CLAUDE_KEY='your_claude_api_key'
-export GROQ_KEY='your_groq_api_key'
+Copy `.env.example` to `.env` and fill in your API keys:
+
+```bash
+cp .env.example .env
 ```
 
-You can consider to set these key as environment variables in your `.bashrc` or `.bash_profile` file. If you are using windows, you can set these keys in the environment variables settings.
-
-### Using .env file
-Create a file named `.env` in the root directory and add the following lines:
-
-```
-OPENAI_KEY='your_openai_api_key'
-CLAUDE_KEY='your_claude_api_key'
-GROQ_KEY='your_groq_api_key'
-```
-    
-Then, install the `python-dotenv` package:
-```sh
-pip install python-dotenv
-```
-
-and load the environment variables in the `main.py` file:
-```python
-from dotenv import load_dotenv
-load_dotenv()
-
-from model.chat import Chat
-
-service_provider = 'openai'
-chat = Chat(service_provider=service_provider) 
-# if you don't want to use the environment variables, you can use the local_key approach
-print(chat.get_response('Hello, how are you?', "gpt-4o"))
-```
-
-This will be useful if you are using separate keys from same service provider for different projects.
-
-### Using local_key approach
-Also, you can use the local_key approach to store the keys in a file named `SCRECTS_DEV.py` (or other as you prefered) in the root directory. The file should contain the following lines:
+Or set them programmatically:
 
 ```python
-OPENAI_KEY = 'your_openai_api_key'
-CLAUDE_KEY = 'your_claude_api_key'
-GROQ_KEY = 'your_groq_api_key'
+chat = Chat(
+    service_provider='openai',
+    api_key='your-api-key',
+    model='gpt-4'
+)
 ```
 
-and add the following line to the `.gitignore` file:
+## Supported Providers
 
-```
-SCRECTS_DEV.py (or other name you used)
-```
+- OpenAI (GPT-3.5, GPT-4)
+- Anthropic (Claude)
+- Groq
+- Ollama (local models)
 
-lastly, you can import the keys in the `main.py` file as follows:
+## Development
 
-```python
-from model.chat import Chat
-from SCRECTS_DEV import OPENAI_KEY, CLAUDE_KEY, GROQ_KEY # if you used a different name, replace SCRECTS_DEV with the name you used
-
-service_provider = 'openai'
-chat = Chat(local_key=OPENAI_KEY, service_provider=service_provider) 
-# if you don't want to use the local_key approach, you can use the environment variables and remove the local_key parameter
-print(chat.get_response('Hello, how are you?', "gpt-4o"))
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/chat-base.git
+cd chat-base
 ```
 
-
-
-
-## Usage
-
-### Basic Usage
-
-```python
-from model.chat import Chat
-
-service_provider = 'openai'
-chat = Chat(service_provider=service_provider)
-print(chat.get_response('Hello, how are you?', "gpt-4"))
+2. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-### Mode Selection
-
-ChatBase supports four different output modes:
-
-1. Default Mode
-```python
-chat = Chat(service_provider='openai', mode='default')
-response = chat.get_response('What is Python?', "gpt-4")
-# Returns regular chat response
+3. Install development dependencies:
+```bash
+pip install -e ".[dev]"
 ```
 
-2. Markdown Mode
-```python
-chat = Chat(service_provider='openai', mode='markdown')
-response = chat.get_response('Write a Python function to sort a list', "gpt-4")
-# Returns markdown-formatted response with code blocks
-code_blocks = chat.parse_markdown(response)  # Extract code blocks
+4. Run tests:
+```bash
+pytest
 ```
 
-3. JSON Mode (Function Calling)
-```python
-chat = Chat(service_provider='openai', mode='json')
-response = chat.get_response('Get current weather in New York', "gpt-4")
-# Returns JSON-structured response
-parsed_data = chat.parse_json(response)  # Parse JSON response
-```
+## Contributing
 
-4. XML Mode
-```python
-chat = Chat(service_provider='openai', mode='xml')
-response = chat.get_response('Analyze the sentiment of this text', "gpt-4")
-# Returns XML-structured response
-parsed_data = chat.parse_xml(response)  # Parse XML response
-```
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-### Mode-Specific Features
+## License
 
-#### Markdown Mode
-- Automatically formats output in markdown
-- Provides code block extraction
-- Supports syntax highlighting
-- Ideal for documentation and code examples
-
-#### JSON Mode
-- Structured output for programmatic use
-- Perfect for function calling and API integrations
-- Consistent data format for parsing
-- Supports complex nested structures
-
-#### XML Mode
-- Tag-based structure for hierarchical data
-- Easy to parse and validate
-- Suitable for document-style outputs
-- Supports attributes and nested elements
-
-## Logging
-Logs are saved in the `log` directory with timestamps in the filenames. Each service has its own log file.
-
+This project is licensed under the MIT License - see the LICENSE file for details.
