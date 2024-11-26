@@ -1,6 +1,9 @@
 import os
 from dataclasses import dataclass
 from typing import Optional, Dict
+from dotenv import load_dotenv
+
+load_dotenv()
 
 @dataclass
 class Config:
@@ -10,13 +13,15 @@ class Config:
     service_provider: str
     api_key: Optional[str] = None
     model: Optional[str] = None
+    log_dir: Optional[str] = None
+    debug: bool = False
     
     # Provider-specific default models
     PROVIDER_DEFAULT_MODELS = {
-        'openai': 'gpt-4',
-        'claude': 'claude-3-opus-20240229',
+        'openai': 'gpt-4o-mini',  # Updated to match .env default
+        'claude': 'claude-3-sonnet-20240229',
         'groq': 'mixtral-8x7b-32768',
-        'ollama': 'llama2'
+        'ollama': 'llama3.1'  # Updated to match .env default
     }
     
     # Environment variable mappings
@@ -50,6 +55,11 @@ class Config:
         if self.model is None:
             env_model_key = self.ENV_DEFAULT_MODELS[self.service_provider]
             self.model = os.getenv(env_model_key, self.PROVIDER_DEFAULT_MODELS[self.service_provider])
+            
+        # Set logging configuration from environment
+        self.log_dir = os.getenv('LOG_FILE', 'logs')
+        log_level = os.getenv('LOG_LEVEL', 'INFO')
+        self.debug = log_level.upper() == 'DEBUG'
             
     @property
     def provider_config(self) -> Dict[str, Optional[str]]:
