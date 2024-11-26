@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional, Union
-import json
-import requests
+import os
+from ollama import Client
 from ...providers.base import ChatProvider
 from ...utils.logging import ChatLogger
 from ...utils.retry import retry_on_rate_limit
 
 class OllamaChat(ChatProvider):
-    """Ollama provider implementation."""
+    """Ollama provider implementation using the official Python SDK."""
     
     def __init__(
         self,
@@ -15,19 +15,30 @@ class OllamaChat(ChatProvider):
         base_url: Optional[str] = None,
         **kwargs: Any
     ):
-        super().__init__(api_key, model)
         self.logger = ChatLogger("ollama")
         self.base_url = base_url or "http://localhost:11434"
+        self.client = Client(host=self.base_url)
+        super().__init__(api_key, model)
         
     def _initialize(self) -> None:
         """Initialize the Ollama connection."""
-        # Validate the base URL is accessible
         try:
-            response = requests.get(f"{self.base_url}/api/tags")
-            if response.status_code != 200:
-                raise ConnectionError(f"Failed to connect to Ollama: {response.text}")
+            # Test connection by listing models
+            self.client.list()
         except Exception as e:
             raise ConnectionError(f"Failed to connect to Ollama: {str(e)}")
+    
+    def validate_api_key(self) -> bool:
+        """Validate the Ollama connection.
+        
+        Note: Ollama doesn't use API keys, so we just validate the connection.
+        """
+        try:
+            self.client.list()
+            return True
+        except Exception as e:
+            self.logger.error(f"Connection validation failed: {str(e)}")
+            return False
     
     @retry_on_rate_limit
     def get_response(
@@ -39,47 +50,39 @@ class OllamaChat(ChatProvider):
         max_tokens: Optional[int] = None,
         **kwargs: Any
     ) -> str:
-        """Get a response from Ollama."""
+        """Get a response from Ollama using the Python SDK."""
         self.logger.log_request(message, model, system_prompt)
         
         try:
-            # Prepare the request
-            url = f"{self.base_url}/api/chat"
-            data = {
-                "model": model or self.model or "llama2",
-                "messages": [],
-                "options": {
-                    "temperature": temperature,
-                }
-            }
-            
-            if max_tokens:
-                data["options"]["num_predict"] = max_tokens
-                
-            if system_prompt or self.system_prompt:
-                data["messages"].append({
+            messages = []
+            if system_prompt:
+                messages.append({
                     "role": "system",
-                    "content": system_prompt or self.system_prompt
+                    "content": system_prompt
                 })
             
-            data["messages"].append({
+            messages.append({
                 "role": "user",
                 "content": message
             })
             
-            # Make the request
-            response = requests.post(url, json=data)
-            response.raise_for_status()
+            response = self.client.chat(
+                model=model or self.model or "llama3.1",
+                messages=messages,
+                options={
+                    "temperature": temperature,
+                    **({"num_predict": max_tokens} if max_tokens else {})
+                }
+            )
             
-            result = response.json()["message"]["content"]
+            result = response["message"]["content"]
             self.logger.log_response(result)
             return result
             
         except Exception as e:
             self.logger.log_response("", error=e)
-            raise
-    
-    @retry_on_rate_limit
+            raise e
+            
     def get_chat_completion(
         self,
         messages: List[Dict[str, str]],
@@ -87,35 +90,22 @@ class OllamaChat(ChatProvider):
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
         **kwargs: Any
-    ) -> Union[str, Dict[str, Any]]:
-        """Get a chat completion from Ollama."""
+    ) -> str:
+        """Get a chat completion from Ollama using the Python SDK."""
         try:
-            url = f"{self.base_url}/api/chat"
-            data = {
-                "model": model or self.model or "llama2",
-                "messages": messages,
-                "options": {
+            response = self.client.chat(
+                model=model or self.model or "llama2",
+                messages=messages,
+                options={
                     "temperature": temperature,
+                    **({"num_predict": max_tokens} if max_tokens else {})
                 }
-            }
+            )
             
-            if max_tokens:
-                data["options"]["num_predict"] = max_tokens
-            
-            response = requests.post(url, json=data)
-            response.raise_for_status()
-            
-            return response.json()["message"]["content"]
+            result = response["message"]["content"]
+            self.logger.log_response(result)
+            return result
             
         except Exception as e:
-            self.logger.log_error(e, "Chat completion failed")
-            raise
-    
-    def validate_api_key(self) -> bool:
-        """Validate the Ollama connection."""
-        try:
-            response = requests.get(f"{self.base_url}/api/tags")
-            return response.status_code == 200
-        except Exception as e:
-            self.logger.log_error(e, "Connection validation failed")
-            return False
+            self.logger.log_response("", error=e)
+            raise e

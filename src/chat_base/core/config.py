@@ -49,15 +49,24 @@ class Config:
             self.api_key = os.getenv(env_key)
             
             if self.api_key is None and self.service_provider != 'ollama':
-                raise ValueError(f"API key not found. Please set {env_key} environment variable or provide api_key parameter.")
+                raise ValueError(f"API key not found in environment variable: {env_key}")
         
-        # Set model from environment or default if not provided
+        # Set model from environment if not provided
         if self.model is None:
-            env_model_key = self.ENV_DEFAULT_MODELS[self.service_provider]
-            self.model = os.getenv(env_model_key, self.PROVIDER_DEFAULT_MODELS[self.service_provider])
-            
+            env_model_key = self.ENV_DEFAULT_MODELS.get(self.service_provider)
+            if env_model_key:
+                self.model = os.getenv(env_model_key, self.PROVIDER_DEFAULT_MODELS[self.service_provider])
+            else:
+                self.model = self.PROVIDER_DEFAULT_MODELS[self.service_provider]
+        
+        # Set log directory from environment if not provided
+        if self.log_dir is None:
+            env_log_dir = os.getenv('LOG_DIR')
+            if env_log_dir:
+                # If relative path is provided, make it relative to current working directory
+                self.log_dir = os.path.abspath(env_log_dir) if not os.path.isabs(env_log_dir) else env_log_dir
+        
         # Set logging configuration from environment
-        self.log_dir = os.getenv('LOG_FILE', 'logs')
         log_level = os.getenv('LOG_LEVEL', 'INFO')
         self.debug = log_level.upper() == 'DEBUG'
             

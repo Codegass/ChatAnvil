@@ -23,7 +23,7 @@ def main():
     
     response = claude_chat.get_response(
         message="What are the top 3 largest cities in Japan?",
-        temperature=0.7
+        temperature=0.5
     )
     print("\nClaude Response:", response)
     
@@ -35,9 +35,33 @@ def main():
     
     response = openai_chat.get_chat_completion(
         messages=messages,
-        temperature=0.7
+        temperature=0.5
     )
     print("\nChat Completion Response:", response)
+
+    # Use Groq with a system prompt
+    groq_chat = Chat(service_provider='groq')
+    groq_chat.set_system_prompt(
+        "You are a helpful assistant that specializes in programming."
+    )
+    
+    response = groq_chat.get_response(
+        message="Write a Python function to calculate fibonacci numbers.",
+        temperature=0.5
+    )
+    print("\nGroq Response:", response) 
+
+    # Use Ollama with a system prompt
+    ollama_chat = Chat(service_provider='ollama')
+    ollama_chat.set_system_prompt(
+        "You are a helpful assistant that specializes in programming."
+    )
+    
+    response = ollama_chat.get_response(
+        message="Write a Python function to calculate fibonacci numbers.",
+        temperature=0.5
+    )
+    print("\nOllama Response:", response)
 
 if __name__ == "__main__":
     main()

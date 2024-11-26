@@ -24,14 +24,12 @@ class ChatLogger:
         # Ensure logger doesn't duplicate messages
         if not self.logger.handlers:
             # Create log directory if needed
-            log_path = self.config.log_dir
-            if log_path and log_path != 'stdout':
-                log_dir = os.path.dirname(log_path)
-                if log_dir:
-                    os.makedirs(log_dir, exist_ok=True)
+            if self.config.log_dir:
+                os.makedirs(self.config.log_dir, exist_ok=True)
                 
-                # Add file handler
-                file_handler = logging.FileHandler(log_path)
+                # Add file handler for main logs
+                main_log_file = os.path.join(self.config.log_dir, 'chat.log')
+                file_handler = logging.FileHandler(main_log_file)
                 file_handler.setFormatter(logging.Formatter(
                     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
                 ))
@@ -49,28 +47,21 @@ class ChatLogger:
         self.chat_logger.setLevel(logging.INFO)
         
         # Create chat log file with provider, model, and timestamp
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        chat_filename = f"{provider}_{self.config.model}_{timestamp}.chat"
-        
-        # Use a default log directory if not specified
-        log_base_dir = os.path.expanduser('~/.chat_base/logs')
-        chat_log_dir = os.path.join(log_base_dir, 'chats')
-        
-        if self.config.log_dir and self.config.log_dir != 'stdout':
-            log_base_dir = os.path.dirname(self.config.log_dir)
-            chat_log_dir = os.path.join(log_base_dir, 'chats')
-        
-        os.makedirs(chat_log_dir, exist_ok=True)
-        
-        chat_handler = logging.FileHandler(os.path.join(chat_log_dir, chat_filename))
-        chat_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
-        self.chat_logger.addHandler(chat_handler)
-        
-        # Log initial chat session information
-        self.chat_logger.info("=== Chat Session Started ===")
-        self.chat_logger.info(f"Provider: {provider}")
-        self.chat_logger.info(f"Model: {self.config.model}")
-        self.chat_logger.info("-" * 50)
+        if self.config.log_dir:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            chat_filename = f"{provider}_{self.config.model}_{timestamp}.chat"
+            chat_log_dir = os.path.join(self.config.log_dir, 'chats')
+            os.makedirs(chat_log_dir, exist_ok=True)
+            
+            chat_handler = logging.FileHandler(os.path.join(chat_log_dir, chat_filename))
+            chat_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
+            self.chat_logger.addHandler(chat_handler)
+            
+            # Log initial chat session information
+            self.chat_logger.info("=== Chat Session Started ===")
+            self.chat_logger.info(f"Provider: {provider}")
+            self.chat_logger.info(f"Model: {self.config.model}")
+            self.chat_logger.info("-" * 50)
     
     def debug(self, message: str) -> None:
         """Log a debug message."""
