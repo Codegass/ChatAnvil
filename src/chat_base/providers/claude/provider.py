@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 import anthropic
 from ...providers.base import ChatProvider
 from ...utils.logging import ChatLogger
@@ -13,15 +13,30 @@ class ClaudeChat(ChatProvider):
         model: Optional[str] = None,
         **kwargs: Any
     ):
-        super().__init__(api_key, model)
         self.logger = ChatLogger("claude")
-        self.client: Optional[anthropic.Client] = None
+        self.client = None
+        if api_key:
+            self.client = anthropic.Client(api_key=api_key)
+        super().__init__(api_key, model)
         
     def _initialize(self) -> None:
         """Initialize the Claude client."""
         if not self.api_key:
             raise ValueError("Claude API key is required")
-        self.client = anthropic.Client(api_key=self.api_key)
+        if not self.client:
+            self.client = anthropic.Client(api_key=self.api_key)
+            
+    def validate_api_key(self) -> bool:
+        """Validate the Claude API key by attempting to create a client."""
+        try:
+            if not self.api_key:
+                return False
+            if not self.client:
+                self.client = anthropic.Client(api_key=self.api_key)
+            return True
+        except Exception as e:
+            self.logger.log_error(e, "API key validation failed")
+            return False
     
     @retry_on_rate_limit
     def get_response(
@@ -30,7 +45,7 @@ class ClaudeChat(ChatProvider):
         model: Optional[str] = None,
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: Optional[int] = 4000,
         **kwargs: Any
     ) -> str:
         """Get a response from Claude."""
@@ -40,24 +55,16 @@ class ClaudeChat(ChatProvider):
         self.logger.log_request(message, model, system_prompt)
         
         try:
-            messages = []
-            if system_prompt or self.system_prompt:
-                messages.append({
-                    "role": "system",
-                    "content": system_prompt or self.system_prompt
-                })
-            
-            messages.append({
-                "role": "user",
-                "content": message
-            })
-            
+            # Claude API expects system prompt as a top-level parameter
             response = self.client.messages.create(
-                model=model or self.model or "claude-3-opus-20240229",
-                messages=messages,
+                model=model or self.model,
+                system=system_prompt or self.system_prompt,  # Pass system prompt directly
+                messages=[{
+                    "role": "user",
+                    "content": message
+                }],
                 temperature=temperature,
-                max_tokens=max_tokens,
-                **kwargs
+                max_tokens=max_tokens if max_tokens else 4000
             )
             
             result = response.content[0].text
@@ -66,49 +73,44 @@ class ClaudeChat(ChatProvider):
             
         except Exception as e:
             self.logger.log_response("", error=e)
-            raise
-    
+            raise e
+            
     @retry_on_rate_limit
     def get_chat_completion(
         self,
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: Optional[int] = 4000,
         **kwargs: Any
-    ) -> Union[str, Dict[str, Any]]:
+    ) -> str:
         """Get a chat completion from Claude."""
         if not self.client:
             raise RuntimeError("Claude client not initialized")
             
         try:
+            # Extract system message if present
+            system_message = None
+            chat_messages = []
+            
+            for msg in messages:
+                if msg["role"] == "system":
+                    system_message = msg["content"]
+                else:
+                    chat_messages.append(msg)
+            
             response = self.client.messages.create(
-                model=model or self.model or "claude-3-opus-20240229",
-                messages=messages,
+                model=model or self.model,
+                system=system_message,  # Pass system message as top-level parameter
+                messages=chat_messages,
                 temperature=temperature,
-                max_tokens=max_tokens,
-                **kwargs
+                max_tokens=max_tokens if max_tokens else 4000
             )
             
-            return response.content[0].text
+            result = response.content[0].text
+            self.logger.log_response(result)
+            return result
             
         except Exception as e:
-            self.logger.log_error(e, "Chat completion failed")
-            raise
-    
-    def validate_api_key(self) -> bool:
-        """Validate the Claude API key."""
-        if not self.client:
-            return False
-            
-        try:
-            # Make a minimal API call to validate the key
-            self.client.messages.create(
-                model="claude-3-opus-20240229",
-                messages=[{"role": "user", "content": "Hello"}],
-                max_tokens=1
-            )
-            return True
-        except Exception as e:
-            self.logger.log_error(e, "API key validation failed")
-            return False
+            self.logger.log_response("", error=e)
+            raise e

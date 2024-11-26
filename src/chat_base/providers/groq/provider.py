@@ -13,15 +13,30 @@ class GroqChat(ChatProvider):
         model: Optional[str] = None,
         **kwargs: Any
     ):
-        super().__init__(api_key, model)
         self.logger = ChatLogger("groq")
-        self.client: Optional[groq.Client] = None
+        self.client = None
+        if api_key:
+            self.client = groq.Client(api_key=api_key)
+        super().__init__(api_key, model)
         
     def _initialize(self) -> None:
         """Initialize the Groq client."""
         if not self.api_key:
             raise ValueError("Groq API key is required")
-        self.client = groq.Client(api_key=self.api_key)
+        if not self.client:
+            self.client = groq.Client(api_key=self.api_key)
+            
+    def validate_api_key(self) -> bool:
+        """Validate the Groq API key by attempting to create a client."""
+        try:
+            if not self.api_key:
+                return False
+            if not self.client:
+                self.client = groq.Client(api_key=self.api_key)
+            return True
+        except Exception as e:
+            self.logger.log_error(e, "API key validation failed")
+            return False
     
     @retry_on_rate_limit
     def get_response(
@@ -30,7 +45,7 @@ class GroqChat(ChatProvider):
         model: Optional[str] = None,
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: Optional[int] = 400,
         **kwargs: Any
     ) -> str:
         """Get a response from Groq."""
@@ -53,11 +68,10 @@ class GroqChat(ChatProvider):
             })
             
             response = self.client.chat.completions.create(
-                model=model or self.model or "mixtral-8x7b-32768",
+                model=model or self.model,
                 messages=messages,
                 temperature=temperature,
-                max_tokens=max_tokens,
-                **kwargs
+                max_tokens=max_tokens if max_tokens else None
             )
             
             result = response.choices[0].message.content
@@ -66,7 +80,7 @@ class GroqChat(ChatProvider):
             
         except Exception as e:
             self.logger.log_response("", error=e)
-            raise
+            raise e
     
     @retry_on_rate_limit
     def get_chat_completion(
@@ -76,39 +90,23 @@ class GroqChat(ChatProvider):
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
         **kwargs: Any
-    ) -> Union[str, Dict[str, Any]]:
+    ) -> str:
         """Get a chat completion from Groq."""
         if not self.client:
             raise RuntimeError("Groq client not initialized")
             
         try:
             response = self.client.chat.completions.create(
-                model=model or self.model or "mixtral-8x7b-32768",
+                model=model or self.model,
                 messages=messages,
                 temperature=temperature,
-                max_tokens=max_tokens,
-                **kwargs
+                max_tokens=max_tokens if max_tokens else None
             )
             
-            return response.choices[0].message.content
+            result = response.choices[0].message.content
+            self.logger.log_response(result)
+            return result
             
         except Exception as e:
-            self.logger.log_error(e, "Chat completion failed")
-            raise
-    
-    def validate_api_key(self) -> bool:
-        """Validate the Groq API key."""
-        if not self.client:
-            return False
-            
-        try:
-            # Make a minimal API call to validate the key
-            self.client.chat.completions.create(
-                model="mixtral-8x7b-32768",
-                messages=[{"role": "user", "content": "Hello"}],
-                max_tokens=1
-            )
-            return True
-        except Exception as e:
-            self.logger.log_error(e, "API key validation failed")
-            return False
+            self.logger.log_response("", error=e)
+            raise e

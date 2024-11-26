@@ -78,11 +78,25 @@ class ChatLogger:
     def error(self, message: str) -> None:
         """Log an error message."""
         self.logger.error(message)
-    
+        
     def critical(self, message: str) -> None:
         """Log a critical message."""
         self.logger.critical(message)
-    
+        
+    def log_error(self, error: Exception, message: Optional[str] = None) -> None:
+        """Log an error with optional context message.
+        
+        Args:
+            error: The exception that occurred
+            message: Optional context message to include with the error
+        """
+        error_msg = f"{message + ': ' if message else ''}{str(error)}"
+        self.logger.error(error_msg)
+        
+        # Log error details to chat history if available
+        if hasattr(self, 'chat_logger'):
+            self.chat_logger.error(error_msg)
+            
     def log_request(
         self,
         message: str,
