@@ -140,3 +140,4 @@ cython_debug/
 # sectrets
 SCRECTS_DEV.py
 .key/
+.DS_Store
