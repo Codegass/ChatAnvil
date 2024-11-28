@@ -68,6 +68,34 @@ def test_get_response_with_model(groq_chat):
     groq_chat.client.chat.completions.create.assert_called_once()
     assert groq_chat.client.chat.completions.create.call_args[1]["model"] == "mixtral-8x7b"
 
+def test_get_response_default_max_tokens(groq_chat):
+    """Test default max_tokens value in get_response."""
+    # Setup mock response
+    mock_response = MagicMock()
+    mock_response.choices[0].message.content = "Test response"
+    groq_chat.client.chat.completions.create.return_value = mock_response
+    
+    # Test
+    response = groq_chat.get_response("Test message")
+    
+    assert response == "Test response"
+    groq_chat.client.chat.completions.create.assert_called_once()
+    assert groq_chat.client.chat.completions.create.call_args[1]["max_tokens"] == 400
+
+def test_get_response_custom_max_tokens(groq_chat):
+    """Test custom max_tokens value in get_response."""
+    # Setup mock response
+    mock_response = MagicMock()
+    mock_response.choices[0].message.content = "Test response"
+    groq_chat.client.chat.completions.create.return_value = mock_response
+    
+    # Test
+    response = groq_chat.get_response("Test message", max_tokens=1000)
+    
+    assert response == "Test response"
+    groq_chat.client.chat.completions.create.assert_called_once()
+    assert groq_chat.client.chat.completions.create.call_args[1]["max_tokens"] == 1000
+
 def test_get_response_error(groq_chat):
     """Test error handling in get_response."""
     groq_chat.client.chat.completions.create.side_effect = Exception("API Error")
