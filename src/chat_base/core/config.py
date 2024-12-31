@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,6 +15,16 @@ class Config:
     model: Optional[str] = None
     log_dir: Optional[str] = None
     debug: bool = False
+    
+    # Default configuration values
+    DEFAULT_MAX_TOKENS = {
+        'openai': 2048,
+        'claude': 4000,
+        'groq': 1024,
+        'ollama': 2048
+    }
+    
+    DEFAULT_TEMPERATURE = 0.7
     
     # Provider-specific default models
     PROVIDER_DEFAULT_MODELS = {
@@ -36,6 +46,13 @@ class Config:
         'claude': 'ANTHROPIC_DEFAULT_MODEL',
         'groq': 'GROQ_DEFAULT_MODEL',
         'ollama': 'OLLAMA_DEFAULT_MODEL'
+    }
+    
+    ENV_MAX_TOKENS = {
+        'openai': 'OPENAI_MAX_TOKENS',
+        'claude': 'ANTHROPIC_MAX_TOKENS',
+        'groq': 'GROQ_MAX_TOKENS',
+        'ollama': 'OLLAMA_MAX_TOKENS'
     }
     
     def __post_init__(self):
@@ -61,19 +78,32 @@ class Config:
         
         # Set log directory from environment if not provided
         if self.log_dir is None:
-            env_log_dir = os.getenv('LOG_DIR')
-            if env_log_dir:
-                # If relative path is provided, make it relative to current working directory
-                self.log_dir = os.path.abspath(env_log_dir) if not os.path.isabs(env_log_dir) else env_log_dir
+            self.log_dir = os.getenv('LOG_DIR')
+            if self.log_dir and not os.path.isabs(self.log_dir):
+                # Make relative paths relative to current working directory
+                self.log_dir = os.path.abspath(self.log_dir)
         
         # Set logging configuration from environment
-        log_level = os.getenv('LOG_LEVEL', 'INFO')
-        self.debug = log_level.upper() == 'DEBUG'
-            
+        self.debug = os.getenv('LOG_LEVEL', 'INFO').upper() == 'DEBUG'
+        
+        # Set temperature from environment
+        self.temperature = float(os.getenv('TEMPERATURE', str(self.DEFAULT_TEMPERATURE)))
+        
+        # Set max tokens from environment or use provider-specific defaults
+        env_max_tokens = self.ENV_MAX_TOKENS.get(self.service_provider)
+        if env_max_tokens:
+            self.max_tokens = int(os.getenv(env_max_tokens, str(self.DEFAULT_MAX_TOKENS[self.service_provider])))
+        else:
+            self.max_tokens = self.DEFAULT_MAX_TOKENS[self.service_provider]
+    
     @property
-    def provider_config(self) -> Dict[str, Optional[str]]:
+    def provider_config(self) -> Dict[str, Any]:
         """Return provider-specific configuration."""
-        config: Dict[str, Optional[str]] = {'model': self.model}
+        config = {
+            'model': self.model,
+            'temperature': self.temperature,
+            'max_tokens': self.max_tokens
+        }
         
         if self.service_provider != 'ollama':
             config['api_key'] = self.api_key

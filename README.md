@@ -1,4 +1,4 @@
-# Chat-Base
+# Chat-base
 
 A flexible and extensible Python library for interacting with multiple AI chat providers. Currently supports OpenAI, Anthropic (Claude), Groq, and Ollama.
 
