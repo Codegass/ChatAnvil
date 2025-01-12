@@ -58,7 +58,7 @@ Or set them programmatically:
 chat = Chat(
     service_provider='openai',
     api_key='your-api-key',
-    model='gpt-4'
+    model='gpt-4o'
 )
 ```
 
@@ -91,6 +91,11 @@ pip install -e ".[dev]"
 4. Run tests:
 ```bash
 pytest
+```
+
+5. try to run the example
+```bash
+python examples/basic_chat.py
 ```
 
 ## Contributing
