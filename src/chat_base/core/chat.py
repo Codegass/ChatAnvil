@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional, Type, Union
 from ..providers.base import ChatProvider
 from .config import Config
+from ..parsers.factory import ParserFactory
 
 class Chat:
     """Main interface for interacting with chat providers."""
@@ -10,10 +11,14 @@ class Chat:
         service_provider: str,
         api_key: Optional[str] = None,
         model: Optional[str] = None,
+        parser_type: str = 'default',
         **kwargs: Any
     ):
         self.config = Config(service_provider=service_provider)
         self.provider_name = service_provider.lower()
+        
+        # Initialize the parser
+        self.parser = ParserFactory.get_parser(parser_type)
         
         # Get provider configuration
         provider_config = self.config
@@ -65,8 +70,12 @@ class Chat:
         max_tokens: Optional[int] = None,
         **kwargs: Any
     ) -> str:
-        """Get a response from the chat provider."""
-        return self.provider.get_response(
+        """Get a response from the chat provider with parser."""
+        # Format the message
+        # formatted_message = self.parser.format_message(message)
+        
+        # Get the raw response
+        raw_response = self.provider.get_response(
             message=message,
             model=model,
             system_prompt=system_prompt,
@@ -74,6 +83,9 @@ class Chat:
             max_tokens=max_tokens,
             **kwargs
         )
+        
+        # Use the parser to process the response
+        return self.parser.parse_response(raw_response)
     
     def get_chat_completion(
         self,
@@ -83,15 +95,36 @@ class Chat:
         max_tokens: Optional[int] = None,
         **kwargs: Any
     ) -> Union[str, Dict[str, Any]]:
-        """Get a chat completion from the provider."""
-        return self.provider.get_chat_completion(
+        """Get a chat completion from the provider with parser."""
+        raw_response = self.provider.get_chat_completion(
             messages=messages,
             model=model,
             temperature=temperature,
             max_tokens=max_tokens,
             **kwargs
         )
+        
+        # If the response is a string, parse it
+        if isinstance(raw_response, str):
+            return self.parser.parse_response(raw_response)
+        
+        # If the response is a dictionary, return it as is
+        return raw_response
     
     def set_system_prompt(self, prompt: str) -> None:
         """Set the system prompt for future conversations."""
         self.provider.set_system_prompt(prompt)
+    
+    def extract_code(self, response: str) -> List[Dict[str, str]]:
+        """Extract code blocks from the response."""
+        if self.parser.type == 'default':
+            raise ValueError("Default parser does not support code extraction.")
+        return self.parser.extract_code(response)
+    
+    def set_parser(self, parser_type: str) -> None:
+        """Change the current parser."""
+        self.parser = ParserFactory.get_parser(parser_type)
+    
+    def get_current_parser(self) -> str:
+        """Get the type of the current parser."""
+        return self.parser.__class__.__name__.lower().replace('parser', '')

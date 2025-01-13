@@ -1,104 +1,115 @@
 import json
 import re
-from typing import Any, Dict, List
+from typing import Dict, List, Any, Union
 from .base import BaseParser
 
 class JSONParser(BaseParser):
-    """Parser for JSON-formatted responses."""
+    """Parser for JSON formatted responses."""
+    
+    # 定义可能包含代码的字段名称
+    CODE_FIELDS = [
+        'code',
+        'source',
+        'function_code',
+        'function',
+        'implementation',
+        'script'
+    ]
     
     def __init__(self):
-        self.code_pattern = re.compile(
-            r'```(\w+)?\n(.*?)\n```',
-            re.DOTALL
-        )
-    
-    def parse_response(self, response: str) -> str:
-        """Parse JSON-formatted response.
+        self.type = 'json'
         
-        Attempts to:
-        1. Parse the entire response as JSON
-        2. Extract JSON objects from markdown-like responses
-        3. Return the original response if no JSON is found
-        """
+    def parse_response(self, response: str) -> str:
+        """Parse JSON from response, including from markdown code blocks."""
+        # First try to extract JSON from markdown code block
+        pattern = r'```json\n(.*?)\n```'
+        match = re.search(pattern, response, re.DOTALL)
+        if match:
+            response = match.group(1)
+            
         try:
-            # Try parsing the entire response as JSON
             parsed = json.loads(response)
             return json.dumps(parsed, indent=2)
         except json.JSONDecodeError:
-            # Look for JSON objects in the response
-            json_pattern = r'\{[^{}]*\}'
-            matches = re.finditer(json_pattern, response)
-            
-            for match in matches:
-                try:
-                    json_str = match.group(0)
-                    parsed = json.loads(json_str)
-                    # Replace the JSON string with a properly formatted version
-                    response = response.replace(
-                        json_str,
-                        json.dumps(parsed, indent=2)
-                    )
-                except json.JSONDecodeError:
-                    continue
-            
             return response
-    
-    def extract_code(self, response: str) -> List[Dict[str, str]]:
-        """Extract code blocks from the response.
+            
+    def _extract_code_recursive(self, data: Union[Dict, List, Any]) -> List[Dict[str, str]]:
+        """Recursively extract code blocks from nested JSON structure.
+        Only for code blocks in the format of {language: "...", content: "..."}
         
-        Also attempts to parse JSON objects outside of code blocks.
+        Args:
+            data: JSON data structure (can be dict, list, or primitive type)
+            
+        Returns:
+            List of code blocks found in the structure
         """
         code_blocks = []
         
-        # Extract code blocks
-        for match in self.code_pattern.finditer(response):
-            language = match.group(1) or 'json'
-            code = match.group(2).strip()
-            
-            code_blocks.append({
-                'language': language,
-                'code': code
-            })
-        
-        # Look for JSON objects outside code blocks
-        cleaned_response = self.code_pattern.sub('', response)
-        json_pattern = r'\{[^{}]*\}'
-        matches = re.finditer(json_pattern, cleaned_response)
-        
-        for match in matches:
-            try:
-                json_str = match.group(0)
-                json.loads(json_str)  # Validate it's valid JSON
+        if isinstance(data, dict):
+            # check if the format is {language: "...", content: "..."}
+            if 'content' in data and isinstance(data.get('content'), str):
+                language = data.get('language', '')
                 code_blocks.append({
-                    'language': 'json',
-                    'code': json_str
+                    'language': language,
+                    'content': data['content']
                 })
-            except json.JSONDecodeError:
-                continue
-        
-        return code_blocks
-    
-    def format_message(self, message: str, **kwargs: Any) -> str:
-        """Format a message for JSON output.
-        
-        Args:
-            message: Message to format
-            **kwargs: Additional formatting options
-                wrap_json: Whether to wrap non-JSON messages in a JSON object
+                return code_blocks
+            
+            # Check for code fields at current level
+            for field in self.CODE_FIELDS:
+                if field in data:
+                    code = data[field]
+                    if isinstance(code, str):
+                        # Try to determine language from context
+                        language = data.get('language', '')
+                        if not language:
+                            # Try to guess language from field name or parent keys
+                            if 'python' in field.lower() or 'py' in field.lower():
+                                language = 'python'
+                            elif 'javascript' in field.lower() or 'js' in field.lower():
+                                language = 'javascript'
+                            # Add more language detection rules as needed
+                        
+                        code_blocks.append({
+                            'language': language,
+                            'content': code
+                        })
+                    elif isinstance(code, dict):
+                        # recursively process nested code objects
+                        code_blocks.extend(self._extract_code_recursive(code))
+            
+            # Recursively check all values
+            for value in data.values():
+                code_blocks.extend(self._extract_code_recursive(value))
                 
-        Returns:
-            JSON-formatted message
-        """
-        wrap_json = kwargs.get('wrap_json', True)
+        elif isinstance(data, list):
+            # Recursively check all items in list
+            for item in data:
+                code_blocks.extend(self._extract_code_recursive(item))
+                
+        return code_blocks
+            
+    def extract_code(self, response: str) -> List[Dict[str, str]]:
+        """Extract code blocks from JSON response.
         
+        Looks for code blocks in various code-related fields at any nesting level.
+        Also handles code blocks in arrays and nested code objects with language/content format.
+        
+        Returns:
+            List of dicts with 'language' and 'content' keys
+        """
+        code_blocks = []
         try:
-            # Check if the message is already JSON
-            json.loads(message)
-            return message
+            # First try to extract JSON from markdown block
+            pattern = r'```json\n(.*?)\n```'
+            match = re.search(pattern, response, re.DOTALL)
+            if match:
+                response = match.group(1)
+                
+            data = json.loads(response)
+            code_blocks = self._extract_code_recursive(data)
+                        
         except json.JSONDecodeError:
-            if wrap_json:
-                # Wrap non-JSON messages in a JSON object
-                return json.dumps({
-                    "message": message
-                }, indent=2)
-            return message
+            pass
+            
+        return code_blocks 

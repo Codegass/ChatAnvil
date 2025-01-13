@@ -27,16 +27,3 @@ class BaseParser(ABC):
             List of dictionaries containing code blocks with language and content
         """
         pass
-    
-    @abstractmethod
-    def format_message(self, message: str, **kwargs: Any) -> str:
-        """Format a message before sending to the model.
-        
-        Args:
-            message: Message to format
-            **kwargs: Additional formatting options
-            
-        Returns:
-            Formatted message string
-        """
-        pass
