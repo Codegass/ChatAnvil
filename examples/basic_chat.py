@@ -1,8 +1,12 @@
+"""
+Basic example demonstrating how to use ChatAnvil with different providers.
+"""
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), "../src"))
 
-from chat_base.core.chat import Chat
+# For development environment
+from chatanvil import Chat  # During development, import directly from chatanvil
 
 def main():
     # Initialize with OpenAI

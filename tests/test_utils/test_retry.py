@@ -1,8 +1,8 @@
 import pytest
 import time
 from unittest.mock import MagicMock, patch
-from chat_base.utils.retry import retry_with_exponential_backoff, retry_on_rate_limit
-from chat_base.utils.logging import ChatLogger
+from chatanvil.utils.retry import retry_with_exponential_backoff, retry_on_rate_limit
+from chatanvil.utils.logging import ChatLogger
 
 def test_retry_with_exponential_backoff_success():
     """Test successful retry with exponential backoff."""

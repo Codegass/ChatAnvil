@@ -2,28 +2,28 @@ import pytest
 import os
 import logging
 from unittest.mock import patch, MagicMock
-from chat_base.utils.logging import ChatLogger
+from chatanvil.utils.logging import ChatLogger
 
 @pytest.fixture
 def mock_config():
-    with patch('chat_base.utils.logging.Config') as mock:
+    with patch('chatanvil.utils.logging.Config') as mock:
         config = MagicMock()
-        config.log_dir = "/tmp/chat_base_logs"
+        config.log_dir = "/tmp/chatanvil_logs"
         config.debug = False
         mock.return_value = config
         yield mock
 
 def test_logger_initialization(mock_config, tmp_path):
     """Test logger initialization."""
-    with patch('chat_base.utils.logging.os.makedirs') as mock_makedirs:
+    with patch('chatanvil.utils.logging.os.makedirs') as mock_makedirs:
         logger = ChatLogger("test_provider")
         
         # Check if log directory is created
-        mock_makedirs.assert_called_once_with("/tmp/chat_base_logs", exist_ok=True)
+        mock_makedirs.assert_called_once_with("/tmp/chatanvil_logs", exist_ok=True)
         
         # Check logger configuration
         assert logger.provider == "test_provider"
-        assert logger.logger.name == "chat_base.test_provider"
+        assert logger.logger.name == "chatanvil.test_provider"
         assert logger.logger.level == logging.INFO
 
 def test_logger_debug_mode(mock_config):

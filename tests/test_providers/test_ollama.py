@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 import requests
-from chat_base.providers.ollama import OllamaChat
+from chatanvil.providers.ollama import OllamaChat
 
 @pytest.fixture
 def ollama_chat():

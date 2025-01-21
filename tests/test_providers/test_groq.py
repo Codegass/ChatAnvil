@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from chat_base.providers.groq import GroqChat
+from chatanvil.providers.groq import GroqChat
 
 @pytest.fixture
 def groq_chat():

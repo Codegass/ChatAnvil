@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from chat_base.core.chat import Chat
-from chat_base.providers.base import ChatProvider
+from chatanvil.core.chat import Chat
+from chatanvil.providers.base import ChatProvider
 
 def test_chat_initialization():
     """Test Chat class initialization."""
@@ -14,7 +14,7 @@ def test_chat_invalid_provider():
     with pytest.raises(ValueError, match="Unsupported provider"):
         Chat(service_provider='invalid_provider')
 
-@patch('chat_base.core.chat.OpenAIChat')
+@patch('chatanvil.core.chat.OpenAIChat')
 def test_chat_response(mock_openai):
     """Test getting response from provider."""
     # Setup mock
@@ -35,7 +35,7 @@ def test_chat_response(mock_openai):
         max_tokens=None
     )
 
-@patch('chat_base.core.chat.OpenAIChat')
+@patch('chatanvil.core.chat.OpenAIChat')
 def test_chat_with_system_prompt(mock_openai):
     """Test chat with system prompt."""
     # Setup mock
@@ -55,7 +55,7 @@ def test_chat_with_system_prompt(mock_openai):
         max_tokens=None
     )
 
-@patch('chat_base.core.chat.OpenAIChat')
+@patch('chatanvil.core.chat.OpenAIChat')
 def test_chat_with_model_override(mock_openai):
     """Test chat with model override."""
     # Setup mock

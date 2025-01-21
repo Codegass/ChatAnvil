@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from chat_base.providers.openai import OpenAIChat
+from chatanvil.providers.openai import OpenAIChat
 
 @pytest.fixture
 def openai_chat():

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "chat-base"
+name = "chatanvil"
 version = "0.1.0"
 description = "A flexible chat interface library supporting multiple AI providers"
 readme = "README.md"

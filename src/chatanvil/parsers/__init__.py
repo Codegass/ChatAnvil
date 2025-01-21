@@ -1,5 +1,5 @@
 """
-Chat Base parsers for handling different response formats.
+Chat-Anvil parsers for handling different response formats.
 """
 
 from .base import BaseParser

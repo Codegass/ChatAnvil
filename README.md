@@ -1,4 +1,4 @@
-# Chat-base
+# ChatAnvil
 
 A flexible and extensible Python library for interacting with multiple AI chat providers. Currently supports OpenAI, Anthropic (Claude), Groq, and Ollama.
 
@@ -14,13 +14,16 @@ A flexible and extensible Python library for interacting with multiple AI chat p
 ## Installation
 
 ```bash
-pip install chat-base
+pip install chatanvil
 ```
 
 ## Quick Start
 
 ```python
-from chat_base.core.chat import Chat
+# After installation via pip
+from anvil import Chat  # Simple alias
+# or
+from chatanvil import Chat  # Full package name
 
 # Initialize with OpenAI
 chat = Chat(service_provider='openai')
@@ -73,8 +76,8 @@ chat = Chat(
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/chat-base.git
-cd chat-base
+git clone git@github.com:Codegass/ChatAnvil.git
+cd ChatAnvil
 ```
 
 2. Create a virtual environment:
@@ -83,19 +86,16 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. Install development dependencies:
+3. Install in development mode:
 ```bash
-pip install -e ".[dev]"
+pip install -e .
 ```
 
-4. Run tests:
+4. Run examples:
 ```bash
-pytest
-```
-
-5. try to run the example
-```bash
+# Examples in the repository use direct imports
 python examples/basic_chat.py
+python examples/chat_with_parser.py
 ```
 
 ## Contributing

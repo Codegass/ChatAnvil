@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from chat_base.providers.claude import ClaudeChat
+from chatanvil.providers.claude import ClaudeChat
 
 @pytest.fixture
 def claude_chat():

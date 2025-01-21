@@ -18,7 +18,7 @@ class ChatLogger:
         self._system_prompt_logged = False
         
         # Set up main logger
-        self.logger = logging.getLogger(f"chat_base.{provider}")
+        self.logger = logging.getLogger(f"chatanvil.{provider}")
         self.logger.setLevel(logging.DEBUG if self.config.debug else logging.INFO)
         
         # Ensure logger doesn't duplicate messages
@@ -43,7 +43,7 @@ class ChatLogger:
             self.logger.addHandler(console_handler)
         
         # Set up chat logger for conversation history
-        self.chat_logger = logging.getLogger(f"chat_base.{provider}.chat")
+        self.chat_logger = logging.getLogger(f"chatanvil.{provider}.chat")
         self.chat_logger.setLevel(logging.INFO)
         
         # Create chat log file with provider, model, and timestamp

@@ -1,9 +1,12 @@
+"""
+Example demonstrating how to use different parsers with ChatAnvil.
+"""
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), "../src"))
 
-from chat_base import Chat
-
+# For development environment
+from chatanvil import Chat  # During development, import directly from chatanvil
 
 def test_markdown_parser():
     """
@@ -86,7 +89,7 @@ def test_default_parser():
     )
     
     try:
-        # 这应该会引发错误，因为默认解析器不支持代码提取
+        # this should raise an error because the default parser does not support code extraction
         chat.extract_code(response)
     except ValueError as e:
         print(f"\nExpected error: {e}")
@@ -112,7 +115,7 @@ def test_parser_switching():
 
 def main():
     """
-    Main function
+    Main function to demonstrate parser usage
     """
     # api key load from .env, you need to set it in your .env file first
     

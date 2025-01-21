@@ -4,9 +4,14 @@ from typing import Dict, List, Any, Union
 from .base import BaseParser
 
 class JSONParser(BaseParser):
-    """Parser for JSON formatted responses."""
+    """
+    Parser for JSON formatted responses.
+    To use this parser, the response should be 
+    in the format of {language: "...", content: "..."}
+    You should specify this in the prompt.
+    """
     
-    # 定义可能包含代码的字段名称
+    # define fields that may contain code
     CODE_FIELDS = [
         'code',
         'source',
