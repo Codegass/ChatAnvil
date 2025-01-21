@@ -1,113 +1,107 @@
-# Chat Base
+# ChatAnvil
 
-Chat Base is a Python project that provides a unified interface for interacting with various chat-based AI services, including OpenAI, Ollama, Groq, and Claude.
+A flexible and extensible Python library for interacting with multiple AI chat providers. Currently supports OpenAI, Anthropic (Claude), Groq, and Ollama.
 
 ## Features
 
-- Supports multiple AI service providers: OpenAI, Ollama, Groq, and Claude.
-- Implements exponential backoff for retrying API requests.
-- Logs API interactions and errors to log files.
-- Allows setting and updating system prompts.
-- Extracts code snippets from AI responses.
+- Unified interface for multiple AI chat providers
+- Easy provider switching with consistent API
+- Built-in retry mechanisms and error handling
+- Configurable logging
+- Environment variable support
+- Type hints throughout
 
 ## Installation
 
-1. Clone the repository:
-    ```sh
-    git clone https://github.com/codegass/chat-base.git
-    cd chat-base
-    ```
+```bash
+pip install chatanvil
+```
 
-2. Create a virtual environment and activate it:
-    ```sh
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
+## Quick Start
 
-3. Install the required dependencies:
-    ```sh
-    pip install -r requirements.txt
-    ```
+```python
+# After installation via pip
+from anvil import Chat  # Simple alias
+# or
+from chatanvil import Chat  # Full package name
+
+# Initialize with OpenAI
+chat = Chat(service_provider='openai')
+
+# Get a response
+response = chat.get_response(
+    message="What is the capital of France?",
+    temperature=0.7
+)
+print(response)
+
+# Switch to Claude
+claude_chat = Chat(
+    service_provider='claude',
+    system_prompt="You are a helpful assistant that specializes in geography."
+)
+
+response = claude_chat.get_response(
+    message="What are the top 3 largest cities in Japan?"
+)
+print(response)
+```
 
 ## Configuration
 
-### Using Global Environment Variables
-Set the necessary environment variables for the API keys:
-```sh
-export OPENAI_KEY='your_openai_api_key'
-export CLAUDE_KEY='your_claude_api_key'
-export GROQ_KEY='your_groq_api_key'
+Copy `.env.example` to `.env` and fill in your API keys:
+
+```bash
+cp .env.example .env
 ```
 
-You can consider to set these key as environment variables in your `.bashrc` or `.bash_profile` file. If you are using windows, you can set these keys in the environment variables settings.
-
-### Using .env file
-Create a file named `.env` in the root directory and add the following lines:
-
-```
-OPENAI_KEY='your_openai_api_key'
-CLAUDE_KEY='your_claude_api_key'
-GROQ_KEY='your_groq_api_key'
-```
-    
-Then, install the `python-dotenv` package:
-```sh
-pip install python-dotenv
-```
-
-and load the environment variables in the `main.py` file:
-```python
-from dotenv import load_dotenv
-load_dotenv()
-
-from model.chatbot import ChatBot
-
-service_provider = 'openai'
-chatbot = ChatBot(service_provider=service_provider) 
-# if you don't want to use the environment variables, you can use the local_key approach
-print(chatbot.get_response('Hello, how are you?', "gpt-4o"))
-```
-
-This will be useful if you are using separate keys from same service provider for different projects.
-
-### Using local_key approach
-Also, you can use the local_key approach to store the keys in a file named `SCRECTS_DEV.py` (or other as you prefered) in the root directory. The file should contain the following lines:
+Or set them programmatically:
 
 ```python
-OPENAI_KEY = 'your_openai_api_key'
-CLAUDE_KEY = 'your_claude_api_key'
-GROQ_KEY = 'your_groq_api_key'
+chat = Chat(
+    service_provider='openai',
+    api_key='your-api-key',
+    model='gpt-4o'
+)
 ```
 
-and add the following line to the `.gitignore` file:
+## Supported Providers
 
-```
-SCRECTS_DEV.py (or other name you used)
-```
+- OpenAI (GPT-3.5, GPT-4)
+- Anthropic (Claude)
+- Groq
+- Ollama (local models)
 
-lastly, you can import the keys in the `main.py` file as follows:
+## Development
 
-```python
-from model.chatbot import ChatBot
-from SCRECTS_DEV import OPENAI_KEY, CLAUDE_KEY, GROQ_KEY # if you used a different name, replace SCRECTS_DEV with the name you used
-
-service_provider = 'openai'
-chatbot = ChatBot(local_key=OPENAI_KEY, service_provider=service_provider) 
-# if you don't want to use the local_key approach, you can use the environment variables and remove the local_key parameter
-print(chatbot.get_response('Hello, how are you?', "gpt-4o"))
+1. Clone the repository:
+```bash
+git clone git@github.com:Codegass/ChatAnvil.git
+cd ChatAnvil
 ```
 
-
-
-
-## Usage
-
-You can use the `main.py` script to interact with the chat services. Modify the `service_provider` parameter to switch between different AI services.
-
-```sh
-python main.py
+2. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-## Logging
-Logs are saved in the `log` directory with timestamps in the filenames. Each service has its own log file.
+3. Install in development mode:
+```bash
+pip install -e .
+```
 
+4. Run examples:
+```bash
+# Examples in the repository use direct imports
+python examples/basic_chat.py
+python examples/chat_with_parser.py
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
