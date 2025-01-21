@@ -1,3 +1,3 @@
 from .provider import OpenAIChat
 
-__all__ = ['OpenAIChat']
+__all__ = ["OpenAIChat"]

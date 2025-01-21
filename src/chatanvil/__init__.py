@@ -13,10 +13,10 @@ import sys
 import types
 
 # 创建一个新的模块对象
-anvil = types.ModuleType('anvil')
+anvil = types.ModuleType("anvil")
 anvil.Chat = Chat
 anvil.Config = Config
 anvil.__version__ = __version__
 
 # 将模块添加到 sys.modules
-sys.modules['anvil'] = anvil
+sys.modules["anvil"] = anvil

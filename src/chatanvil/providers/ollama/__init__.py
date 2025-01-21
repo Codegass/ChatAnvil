@@ -1,3 +1,3 @@
 from .provider import OllamaChat
 
-__all__ = ['OllamaChat']
+__all__ = ["OllamaChat"]

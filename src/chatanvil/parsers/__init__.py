@@ -10,10 +10,10 @@ from .xml_parser import XMLParser
 from .factory import ParserFactory
 
 __all__ = [
-    'BaseParser',
-    'DefaultParser',
-    'MarkdownParser',
-    'JSONParser',
-    'XMLParser',
-    'ParserFactory'
+    "BaseParser",
+    "DefaultParser",
+    "MarkdownParser",
+    "JSONParser",
+    "XMLParser",
+    "ParserFactory",
 ]
