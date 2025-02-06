@@ -56,9 +56,9 @@ def test_extract_nested_code():
 def test_parse_invalid_json():
     """Test parsing invalid JSON response."""
     parser = JSONParser()
-    response = '{"code": "invalid"}'
+    response = '{"code": invalid json'
     
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid JSON response"):
         parser.parse_response(response)
 
 def test_extract_code_invalid_structure():

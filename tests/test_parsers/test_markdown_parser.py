@@ -26,10 +26,11 @@ def test_extract_code_single_block():
 def test_extract_code_multiple_blocks():
     """Test extracting multiple code blocks."""
     parser = MarkdownParser()
-    response = """```python
-def hello():
-    print('Hello')
-```
+    response = """
+    ```python
+    def hello():
+        print('Hello')
+    ```
     Some text
     ```javascript
     console.log('Hello');
