@@ -26,7 +26,7 @@ classifiers = [
 dependencies = [
     "openai>=1.40.0",
     "anthropic>=0.5.0",
-    "groq>=0.30.0",
+    "groq>=0.10.0",
     "ollama>=0.4.0",
     "requests>=2.31.0",
     "python-dotenv>=1.0.0",
@@ -37,8 +37,8 @@ dependencies = [
 dev = [
     "pytest>=8.3.3",
     "pytest-cov>=6.0.0",
-    "black>=24.10.0",
-    "isort>=5.0.0",
+    "black>=25.1.0",
+    "isort>=6.0.0",
     "mypy>=1.0.0",
 ]
 
@@ -55,3 +55,19 @@ pythonpath = ["src"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v"
+
+[tool.hatch.build]
+packages = ["src/chatanvil"]
+include = [
+    "src/chatanvil/**/*",
+    "README.md",
+    "LICENSE",
+    ".env.example"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chatanvil"]
+sources = ["src"]
+
+[tool.hatch.version]
+path = "src/chatanvil/__init__.py"

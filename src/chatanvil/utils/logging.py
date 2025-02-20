@@ -8,51 +8,30 @@ from ..core.config import Config
 class ChatLogger:
     """Logger for chat interactions."""
 
-    def __init__(self, provider: str):
+    def __init__(self, provider_name: str):
         """Initialize the logger with provider-specific configuration.
 
         Args:
-            provider (str): The service provider name (e.g., 'openai', 'claude')
+            provider_name (str): The service provider name (e.g., 'openai', 'claude')
         """
-        self.config = Config(service_provider=provider)
-        self.provider = provider
+        self.config = Config(service_provider=provider_name)
+        self.provider = provider_name
         self._system_prompt_logged = False
 
         # Set up main logger
-        self.logger = logging.getLogger(f"chatanvil.{provider}")
-        self.logger.setLevel(logging.DEBUG if self.config.debug else logging.INFO)
-
-        # Ensure logger doesn't duplicate messages
-        if not self.logger.handlers:
-            # Create log directory if needed
-            if self.config.log_dir:
-                os.makedirs(self.config.log_dir, exist_ok=True)
-
-                # Add file handler for main logs
-                main_log_file = os.path.join(self.config.log_dir, "chat.log")
-                file_handler = logging.FileHandler(main_log_file)
-                file_handler.setFormatter(
-                    logging.Formatter(
-                        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-                    )
-                )
-                self.logger.addHandler(file_handler)
-
-            # Add console handler
-            console_handler = logging.StreamHandler()
-            console_handler.setFormatter(
-                logging.Formatter("%(name)s - %(levelname)s - %(message)s")
-            )
-            self.logger.addHandler(console_handler)
+        self.logger = logging.getLogger(f"chatanvil.{provider_name}")
+        # 确保只添加一次handler
+        if not self.logger.handlers:  
+            self._setup_handlers()
 
         # Set up chat logger for conversation history
-        self.chat_logger = logging.getLogger(f"chatanvil.{provider}.chat")
+        self.chat_logger = logging.getLogger(f"chatanvil.{provider_name}.chat")
         self.chat_logger.setLevel(logging.INFO)
 
         # Create chat log file with provider, model, and timestamp
         if self.config.log_dir:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            chat_filename = f"{provider}_{self.config.model}_{timestamp}.chat"
+            chat_filename = f"{provider_name}_{self.transform_file_name_from_slash_to_dot(self.config.model)}_{timestamp}.chat"
             chat_log_dir = os.path.join(self.config.log_dir, "chats")
             os.makedirs(chat_log_dir, exist_ok=True)
 
@@ -64,9 +43,31 @@ class ChatLogger:
 
             # Log initial chat session information
             self.chat_logger.info("=== Chat Session Started ===")
-            self.chat_logger.info(f"Provider: {provider}")
-            self.chat_logger.info(f"Model: {self.config.model}")
+            self.chat_logger.info(f"Provider: {provider_name}")
+            self.chat_logger.info(f"Model: {self.transform_file_name_from_slash_to_dot(self.config.model)}")
             self.chat_logger.info("-" * 50)
+
+    def _setup_handlers(self):
+        """配置日志处理器"""
+        self.logger.setLevel(logging.DEBUG)
+        
+        # 控制台handler
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        
+        # 文件handler（示例）
+        file_handler = logging.FileHandler('chat.log')
+        file_handler.setLevel(logging.DEBUG)
+        
+        # 统一格式
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        console_handler.setFormatter(formatter)
+        file_handler.setFormatter(formatter)
+        
+        self.logger.addHandler(console_handler)
+        self.logger.addHandler(file_handler)
 
     def debug(self, message: str) -> None:
         """Log a debug message."""
@@ -118,12 +119,12 @@ class ChatLogger:
             **kwargs: Additional request parameters
         """
         # Log to main logger
-        self.logger.info(f"Request - Model: {model or self.config.model}")
-        if self.config.debug:
-            self.logger.debug(f"Message: {message}")
-            if system_prompt:
-                self.logger.debug(f"System Prompt: {system_prompt}")
-            self.logger.debug(f"Additional params: {kwargs}")
+        # self.logger.info(f"Request - Model: {model or self.config.model}")
+        # if self.config.debug:
+        #     self.logger.debug(f"Message: {message}")
+            # if system_prompt:
+            #     self.logger.debug(f"System Prompt: {system_prompt}")
+            # self.logger.debug(f"Additional params: {kwargs}")
 
         # Log system prompt and parameters only once at the beginning
         if not self._system_prompt_logged:
@@ -153,14 +154,14 @@ class ChatLogger:
             metadata: Optional response metadata (tokens, finish reason, etc.)
         """
         # Log to main logger
-        if error:
-            self.logger.error(f"Error in response: {str(error)}")
-        else:
-            self.logger.info("Response received")
-            if self.config.debug:
-                self.logger.debug(f"Response: {response}")
-                if metadata:
-                    self.logger.debug(f"Metadata: {metadata}")
+        # if error:
+        #     self.logger.error(f"Error in response: {str(error)}")
+        # else:
+        #     self.logger.info("Response received")
+        #     if self.config.debug:
+        #         self.logger.debug(f"Response: {response}")
+        #         if metadata:
+        #             self.logger.debug(f"Metadata: {metadata}")
 
         # Log to chat history
         if error:
@@ -170,3 +171,7 @@ class ChatLogger:
             if metadata and self.config.debug:
                 self.chat_logger.info(f"[Metadata] {metadata}")
         self.chat_logger.info("-" * 50)
+
+    def transform_file_name_from_slash_to_dot(self, file_name: str) -> str:
+        """Transform file name from slash to dot."""
+        return file_name.replace("/", ".")

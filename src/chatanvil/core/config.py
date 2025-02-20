@@ -2,8 +2,17 @@ import os
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
+from ..utils.project import find_project_root
 
-load_dotenv()
+# Try to load .env from current working directory first
+cwd_env = os.path.join(os.getcwd(), '.env')
+if os.path.exists(cwd_env):
+    load_dotenv(cwd_env, override=True)
+else:
+    # Fallback to package root .env if exists
+    pkg_env = find_project_root(__file__) / ".env"
+    if os.path.exists(pkg_env):
+        load_dotenv(pkg_env, override=True)
 
 
 @dataclass
@@ -18,9 +27,9 @@ class Config:
     debug: bool = False
 
     # Default configuration values
-    DEFAULT_MAX_TOKENS = {"openai": 2048, "claude": 4000, "groq": 1024, "ollama": 2048}
+    DEFAULT_MAX_TOKENS = {"openai": 4000, "claude": 4000, "groq": 4000, "ollama": 2048, "openrouter": 4000}
 
-    DEFAULT_TEMPERATURE = 0.7
+    DEFAULT_TEMPERATURE = 0.3
 
     # Provider-specific default models
     PROVIDER_DEFAULT_MODELS = {
@@ -28,6 +37,7 @@ class Config:
         "claude": "claude-3-sonnet-20240229",
         "groq": "mixtral-8x7b-32768",
         "ollama": "llama3.1",  # Updated to match .env default
+        "openrouter": "deepseek/deepseek-r1:free",
     }
 
     # Environment variable mappings
@@ -35,6 +45,7 @@ class Config:
         "openai": "OPENAI_API_KEY",
         "claude": "ANTHROPIC_API_KEY",
         "groq": "GROQ_API_KEY",
+        "openrouter": "OPENROUTER_API_KEY",
     }
 
     ENV_DEFAULT_MODELS = {
@@ -42,6 +53,7 @@ class Config:
         "claude": "ANTHROPIC_DEFAULT_MODEL",
         "groq": "GROQ_DEFAULT_MODEL",
         "ollama": "OLLAMA_DEFAULT_MODEL",
+        "openrouter": "OPENROUTER_DEFAULT_MODEL",
     }
 
     ENV_MAX_TOKENS = {
@@ -49,6 +61,7 @@ class Config:
         "claude": "ANTHROPIC_MAX_TOKENS",
         "groq": "GROQ_MAX_TOKENS",
         "ollama": "OLLAMA_MAX_TOKENS",
+        "openrouter": "OPENROUTER_MAX_TOKENS",
     }
 
     def __post_init__(self):
@@ -60,7 +73,7 @@ class Config:
         if self.api_key is None and self.service_provider in self.ENV_API_KEYS:
             env_key = self.ENV_API_KEYS[self.service_provider]
             self.api_key = os.getenv(env_key)
-
+            # print(f"API key from environment variable: {env_key} - {self.api_key}")
             if self.api_key is None and self.service_provider != "ollama":
                 raise ValueError(
                     f"API key not found in environment variable: {env_key}"

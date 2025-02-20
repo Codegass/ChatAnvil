@@ -40,12 +40,14 @@ class Chat:
         from ..providers.claude import ClaudeChat
         from ..providers.groq import GroqChat
         from ..providers.ollama import OllamaChat
+        from ..providers.openrouter import OpenRouterChat
 
         providers: Dict[str, Type[ChatProvider]] = {
             "openai": OpenAIChat,
             "claude": ClaudeChat,
             "groq": GroqChat,
             "ollama": OllamaChat,
+            "openrouter": OpenRouterChat
         }
 
         if self.provider_name not in providers:

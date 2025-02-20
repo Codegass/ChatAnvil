@@ -42,7 +42,7 @@ class GroqChat(ChatProvider):
         message: str,
         model: Optional[str] = None,
         system_prompt: Optional[str] = None,
-        temperature: float = 0.7,
+        temperature: float = 0.5,
         max_tokens: Optional[int] = 400,
         **kwargs: Any,
     ) -> str:
@@ -81,7 +81,7 @@ class GroqChat(ChatProvider):
         self,
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
-        temperature: float = 0.7,
+        temperature: float = 0.5,
         max_tokens: Optional[int] = None,
         **kwargs: Any,
     ) -> str:
